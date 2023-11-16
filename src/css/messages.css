@@ -1,0 +1,138 @@
+.composed-message {
+    display: flex;
+    flex-direction: column;
+    row-gap: 4px;
+}
+
+.my-cm {
+    align-self: flex-end;
+}
+
+.his-cm {
+    align-self: flex-start;
+}
+
+.message {
+    position: relative;
+    width: auto;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    color: #fff;
+    overflow-wrap: break-word;
+}
+
+.message.top {
+    padding: 10px 15px 10px 15px;
+}
+
+.message.middle {
+    padding: 10px 15px 10px 15px;
+}
+
+.message.bottom {
+    padding: 10px 15px 5px 15px;
+}
+
+.message.normal {
+    padding: 10px 15px 5px 15px;
+    border-radius: 10px;
+}
+
+.message.my-message.top {
+    border-radius: 10px 10px 0 5px;
+}
+
+.message.my-message.middle {
+    border-radius: 5px 0 0 5px;
+}
+
+.message.my-message.bottom {
+    border-radius: 5px 0 0 10px;
+}
+
+.message.his-message.top {
+    border-radius: 0 10px 5px 0;
+}
+
+.message.his-message.middle {
+    border-radius: 0 5px 5px 0;
+}
+
+.message.his-message.bottom {
+    border-radius: 0 5px 10px 10px;
+}
+
+.message span {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--quinary-color);
+}
+
+.message.my-message.bottom::before, .message.my-message.normal::before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 10px;
+}
+
+.my-message {
+    align-self: flex-end;
+    background: var(--primary-color);
+}
+
+.my-message.normal, .my-message.bottom {
+    border-bottom-right-radius: 0;
+}
+
+.my-message::before {
+    bottom: -9px;
+    right: 0;
+    background: var(--primary-color);
+    clip-path: polygon(0 0, 100% 100%, 100% 0);
+}
+
+.my-message span {
+    align-self: flex-start;
+}
+
+.his-message {
+    align-self: flex-start;
+    background: var(--secondary-color);
+}
+
+.his-message.normal, .his-message.bottom {
+    border-top-left-radius: 0;
+}
+
+.his-message span {
+    align-self: flex-end;
+}
+
+.message.his-message.top::before, .message.his-message.normal::before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 10px;
+}
+
+.his-message::before {
+    top: -9px;
+    left: 0;
+    background: var(--secondary-color);
+    clip-path: polygon(0 0, 0 100%, 100% 100%);
+}
+
+.see-more-message {
+    border: none;
+    color: var(--quaternary-color);
+    background: transparent;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 1rem;
+    transition: color 50ms linear;
+}
+
+.see-more-message:hover {
+    color: var(--tertiary-color);
+}
