@@ -2,7 +2,6 @@ import express from 'express';
 import dotenv from 'dotenv';
 import { Server } from 'socket.io';
 import { createServer } from 'node:http';
-import { ObjectId } from 'mongodb';
 
 dotenv.config();
 
@@ -23,7 +22,6 @@ async function getGroupMessages(groupId) {
     const result = await fetch(`${process.env.NEXT_PUBLIC_API_URI}/messages?groupid=${groupId}`, requestConfig);
 
     const resultJSON = await result.json();
-    resultJSON.createdAt = new Date(resultJSON.createdAt);
 
     return resultJSON;
 }
@@ -33,10 +31,11 @@ io.on('connection', async (socket) => {
 
     socket.on('subscribeToGroup', async (groupId) => {
         socket.join(groupId);
+        console.log('User joined to the group ' + groupId);
 
-        const messages = await getGroupMessages(groupId);
+        const response = await getGroupMessages(groupId);
 
-        socket.emit('initialMessages', messages);
+        socket.emit('initialMessages', response);
     });
 
     socket.on('sendMessage', async (message) => {
@@ -52,7 +51,7 @@ io.on('connection', async (socket) => {
     });
 
     socket.on('unsubscribeFromGroup', groupId => {
-        console.log('unsubscribed from ' + groupId)
+        console.log('User unsubscribed from ' + groupId)
         socket.leave(groupId);
     });
 
@@ -61,12 +60,7 @@ io.on('connection', async (socket) => {
     });
 
     if (!socket.recovered) {
-        try {
-            const result = await fetch(`${process.env.NEXT_PUBLIC_API_URI}/messages?groupid=&fromdate=`);
-            const unrecoveredMessages = await result.json();
-        } catch (error) {
-            
-        }
+       
     }
 });
 

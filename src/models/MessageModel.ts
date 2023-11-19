@@ -1,30 +1,58 @@
-import MessageType from "@/types/server/MessageType";
-import { ObjectId, Collection } from 'mongodb';
+import pool from "@/database/connection";
+import MessageType from "@/types/MessageType";
+import { RowDataPacket, ResultSetHeader } from 'mysql2';
+import { v4 } from "uuid";
+
 
 class MessageModel {
-    static async create(messageCollection: Collection<MessageType>, message: MessageType) {
-        const result = await messageCollection.insertOne(message);
-        return result;
+    static async create({ id, content, userId, groupId, createdAt }: MessageType) {
+        const [result] = await pool.execute<ResultSetHeader>(
+            'insert into messages (id, content, userId, groupId, createdAt) values (uuid_to_bin(?), ?, uuid_to_bin(?), uuid_to_bin(?), ?)',
+            [id, content, userId, groupId, createdAt]
+        );
+
+        if (!result.affectedRows) {
+            throw new Error('Couldn\'t create the message');
+        }
+
+        return id;
     }
 
-    static async getByGroup(messageCollection: Collection<MessageType>, groupId: string, fromDate: string | null) {
-        const result = await messageCollection.find({
-            groupId: new ObjectId(groupId),
-            createdAt: { $gt: fromDate ? new Date(fromDate) : new Date('2023-11-04') }
-        }).sort({ createdAt: 1 }).toArray();
-        return result;
+    static async getByGroup(groupId: string) {
+        const [rows] = await pool.execute<RowDataPacket[][]>(
+            `select bin_to_uuid(id) id, content, bin_to_uuid(userId) userId, bin_to_uuid(groupId) groupId, createdAt
+                from messages
+                where groupId = uuid_to_bin(?)
+                order by createdAt asc`,
+            [groupId]
+        );
+        return rows;
     }
 
-    static async update(messageCollection: Collection<MessageType>, messageId: string, newMessage: string) {
-        const result = await messageCollection.updateOne({ _id: new ObjectId(messageId) }, {
-            $set: { content: newMessage }
-        });
-        return result;
+    static async update(messageId: string, newMessageContent: string) {
+        const [result] = await pool.execute<ResultSetHeader>(
+            'update table messages set content = ? where id = uuid_to_bin(?)',
+            [newMessageContent, messageId]
+        );
+
+        if (!result.affectedRows) {
+            throw new Error('Couldn\'t update the message');
+        }
+
+        return messageId;
     }
 
-    static async delete(messageCollection: Collection<MessageType>, messageId: string) {
-        const result = await messageCollection.deleteOne({ _id: new ObjectId(messageId) });
-        return result;
+    static async delete(messageId: string) {
+        const [result] = await pool.execute<ResultSetHeader>(
+            'delete from messages where id = uuid_to_bin(?)',
+            [messageId]
+        );
+
+        if (!result.affectedRows) {
+            throw new Error('Message not found');
+        }
+
+        return { deleted: true };
     }
 }
 

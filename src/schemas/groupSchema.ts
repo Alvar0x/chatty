@@ -1,8 +1,8 @@
-import GroupType from '@/types/server/GroupType';
+import GroupType from '@/types/GroupType';
 import { z } from 'zod';
-import { ObjectId } from 'mongodb';
 
 const groupSchema = z.object({
+    id: z.string().uuid().optional(),
     name: z.string().min(1, 'Group name can\'t be empty'),
     createdAt: z.date()
 });

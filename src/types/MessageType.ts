@@ -1,5 +1,5 @@
 type MessageType = {
-    _id: string,
+    id: string,
     content: string,
     groupId: string,
     userId: string,

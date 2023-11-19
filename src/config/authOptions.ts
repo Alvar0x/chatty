@@ -1,8 +1,7 @@
 import { authenticate } from "@/services/auth";
+import ResponseType from "@/types/ResponseType";
 import { NextAuthOptions, Session } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { MongoDBAdapter } from '@auth/mongodb-adapter';
-import { MongoClient, ServerApiVersion } from 'mongodb';
 
 type Credentials = {
     username: string,
@@ -13,28 +12,25 @@ type Credentials = {
     json: string
 }
 
-const client = new MongoClient(process.env.NEXT_PUBLIC_MONGODB_URI as string, {
-    serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-    }
-});
-
 const authOptions: NextAuthOptions = {
     providers: [
         CredentialsProvider({
             name: 'Credentials',
             credentials: {},
-            async authorize (credentials, req) {
+            async authorize(credentials, req) {
                 const data = req.body;
                 
                 if (data !== undefined) {
-                    const res = await authenticate(data.username, data.password);
-                    if (typeof res !== "undefined") {
-                        return res;
-                    } else {
-                        return null;
+                    try {
+                        const response: ResponseType = await authenticate(data.username, data.password);
+
+                        if (response.status !== 200) {
+                            return response.message;
+                        }
+                        
+                        return response.data;
+                    } catch (error: any) {
+                        return error.message;
                     }
                 } else {
                     return null;
@@ -49,15 +45,6 @@ const authOptions: NextAuthOptions = {
         signIn: `${process.env.NEXTAUTH_URL}/signin`
     },
     secret: process.env.NEXTAUTH_SECRET,
-    adapter: MongoDBAdapter(client.connect(), {
-        databaseName: 'chatty',
-        collections: {
-            Users: 'users',
-            Accounts: 'accounts',
-            Sessions: 'sessions',
-            VerificationTokens: 'verificationTokens'
-        }
-    }),
     callbacks: {
         async jwt({ user, token }) {
             if (user) {

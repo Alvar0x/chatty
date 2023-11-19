@@ -4,8 +4,6 @@ import ResponseType from "@/types/ResponseType";
 import { NextRequest } from "next/server";
 import { getServerSession } from 'next-auth';
 import authOptions from "@/config/authOptions";
-import GroupType from "@/types/server/GroupType";
-import clientPromise from "@/config/mongodb";
 
 export async function POST(request: Request) {
     const data = await request.json();
@@ -14,60 +12,64 @@ export async function POST(request: Request) {
     const validResult = await validateGroup(data);
 
     if (!validResult.success) {
-        return Response.json({
-            code: 400,
+        const error: ResponseType = {
+            status: 400,
             message: `[${validResult.error.issues[0].path[0]}] ` + validResult.error.issues[0].message 
-        });
+        }
+        return Response.json(error);
     }
 
+    const session = await getServerSession(authOptions);
+
     try {
-        const client = await clientPromise;
-        const groupsCollection = client.db('chatty').collection<GroupType>('groups');
+        if (session && session.user) {
+            const groupId = await GroupModel.create(data.name);
 
-        await client.connect();
+            if (!groupId) {
+                const error: ResponseType = { status: 500, message: 'Couldn\'t create the group' };
+                return Response.json(error);
+            }
 
-        const existing = await GroupModel.getByName(groupsCollection, data.name);
+            const { userId, groupId: gId } = await GroupModel.addUserToGroup(session.user.id, groupId, 'admin');
 
-        if (existing && existing._id) {
-            const error: ResponseType = { code: 400, message: 'There is already a group with that name' };
-            return Response.json(error);
-        }
+            if (!(userId && gId)) {
+                const { deleted } = await GroupModel.delete(groupId);
 
-        const result = await GroupModel.create(groupsCollection, data);
+                if (!deleted) {
+                    const error: ResponseType = { status: 500, message: 'Couldn\'t delete the group' };
+                    return Response.json(error);
+                }
 
-        if (result.acknowledged) {
-            const error: ResponseType = { code: 201, message: 'Group created successfully' };
-            return Response.json(error);
+                const error: ResponseType = { status: 500, message: 'Couldn\'t create the group' };
+                return Response.json(error);
+            }
+
+            const response: ResponseType = { status: 201, message: 'Group created successfully', data: groupId };
+            return Response.json(response);
         } else {
-            const error: ResponseType = { code: 500, message: 'Error creating the group' };
+            const error: ResponseType = { status: 400, message: 'No session found' };
             return Response.json(error);
         }
-    } catch (error) {
-        const catchError: ResponseType = { code: 500, message: error as string };
+    } catch (error: any) {
+        const catchError: ResponseType = { status: 201, message: error.message };
         return Response.json(catchError);
     }
 }
 
 export async function GET(request: NextRequest) {
-    // const session = await getServerSession(authOptions);
-    const ofUser = request.nextUrl.searchParams.get('ofuser');
+    const userId = request.nextUrl.searchParams.get('userid');
 
     try {
-        const client = await clientPromise;
-        const groupsCollection = client.db('chatty').collection<GroupType>('groups');
-
-        if (ofUser && ofUser === 'true') {
-            // if (session && session.user) {
-                const result = await GroupModel.getByUser(groupsCollection, '65469c8cca8bf1e737d733c0');
-                return Response.json(result);
-            // } else {
-            //     return Response.json({ code: 400, message: 'No session found' });
-            // }
+        if (userId) {
+            const result = await GroupModel.getByUser(userId);
+            const response: ResponseType = { status: 200, message: 'Groups retrieved successfully', data: result };
+            return Response.json(response);
         } else {
-            const result = await GroupModel.getAll(groupsCollection);
-            return Response.json(result);
+            const error: ResponseType = { status: 400, message: 'No user id provided' };
+            return Response.json(error);
         }
-    } catch (error) {
-        return Response.json({ code: 500, message: error as string });
+    } catch (error: any) {
+        const catchError: ResponseType = { status: 500, message: error.message };
+        return Response.json(catchError);
     }
 }

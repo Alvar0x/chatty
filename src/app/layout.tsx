@@ -2,13 +2,14 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { LayoutProps } from '@/types';
 
 export const metadata: Metadata = {
     title: 'Chatty',
     description: 'Chat created by Álvaro Navas using Next 13.5.6',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: LayoutProps) {
     return (
         <html lang='en'>
             <head>

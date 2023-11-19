@@ -1,4 +1,6 @@
-export async function getUserGroups() {
+import ResponseType from "@/types/ResponseType";
+
+export async function getUserGroups(userId: string) {
     const requestConfig = {
         method: 'get',
         headers: {
@@ -6,10 +8,9 @@ export async function getUserGroups() {
         }
     }
 
-    const result = await fetch(`${process.env.NEXT_PUBLIC_API_URI}/groups?ofuser=true`, requestConfig);
+    const result = await fetch(`${process.env.NEXT_PUBLIC_API_URI}/groups?userid=${userId}`, requestConfig);
 
-    const resultJSON = await result.json();
-    resultJSON.createdAt = new Date(resultJSON.createdAt);
+    const resultJSON: ResponseType = await result.json();
 
     return resultJSON;
 }

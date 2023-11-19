@@ -1,23 +1,33 @@
+import AuthModel from "@/models/AuthModel";
+import ResponseType from "@/types/ResponseType";
+import UserType from "@/types/UserType";
+
 export async function authenticate(username: string, password: string) {
-    const settings = {
-        method: 'POST',
+    const requestConfig = {
+        method: 'post',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({ username, password })
-    }
+    };
 
-    const authResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/auth/signin`, settings);
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URI}/auth/signin`, requestConfig);
+    const responseJSON: ResponseType = await response.json();
 
-    if (!authResponse.ok) {
-        return null;
-    }
-
-    const user = await authResponse.json();
-
-    return user;
+    return responseJSON;
 }
 
-export async function register() {
-    
+export async function signUp(newUser: UserType) {
+    const requestConfig = {
+        method: 'post',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newUser)
+    };
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URI}/api/auth/signup`, requestConfig);
+    const responseJSON: ResponseType = await response.json();
+
+    return responseJSON;
 }

@@ -9,6 +9,8 @@ import Messages from '@/components/Messages';
 import Welcome from '@/components/Welcome';
 import Error from '@/components/Error';
 import io from 'socket.io-client';
+import { v4 } from 'uuid';
+import { useEffect } from 'react';
 
 type HomeCardProps = {
     session: Session | null;
@@ -19,35 +21,43 @@ const socket = io(`http://localhost:${process.env.NEXT_PUBLIC_SOCKET_PORT}`);
 export default function HomeCard({ session }: HomeCardProps) {
     const { setMessages, currentGroup, loading, error } = useChatContext();
 
-    if (currentGroup) {
-        const messagesSection = document.getElementById('messages') as HTMLElement;
-        messagesSection.scrollTo({ top: messagesSection.scrollHeight, behavior: 'instant' });
+    useEffect(() => {
+        if (currentGroup) {
+            const messagesSection = document.getElementById('messages') as HTMLElement;
+            messagesSection.scrollTo({ top: messagesSection.scrollHeight, behavior: 'instant' });
 
-        // Suscribirse al grupo al montar el componente
-        socket.emit('subscribeToGroup', currentGroup._id);
+            // Suscribirse al grupo al montar el componente
+            socket.emit('subscribeToGroup', currentGroup.id);
 
-        // Manejar mensajes iniciales
-        socket.on('initialMessages', (initialMessages) => {
-            setMessages(initialMessages);
-        });
+            // Manejar mensajes iniciales
+            socket.on('initialMessages', (response) => {
+                setMessages(response.data);
+            });
 
-        // Manejar nuevos mensajes
-        socket.on('newMessage', (newMessage) => {
-            setMessages((prevMessages) => [...prevMessages, newMessage]);
-        });
-    }
+            // Manejar nuevos mensajes
+            socket.on('newMessage', (newMessage) => {
+                setMessages((prevMessages) => [...prevMessages, newMessage]);
+            });
+
+            return () => {
+                socket.emit('unsubscribeFromGroup', currentGroup.id);
+            };
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentGroup]);
 
     const onSubmitFormHandler: React.FormEventHandler<HTMLFormElement> = (event) => {
         event.preventDefault();
 
         const input = document.getElementById('message-input') as HTMLInputElement;
 
-        if (input.value && currentGroup && socket) {
+        if (input.value.trim() && currentGroup) {
             socket.emit('sendMessage', {
+                id: v4(),
                 content: input.value.trim(),
                 createdAt: new Date(),
-                groupId: currentGroup._id,
-                userId: session?.user._id,
+                groupId: currentGroup.id,
+                userId: session?.user.id,
             });
             input.value = '';
         }

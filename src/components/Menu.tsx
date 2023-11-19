@@ -27,9 +27,11 @@ export default function Menu() {
                     <ul className='group-list'>
                         {groups.map((group) => (
                             <li
-                                key={group._id}
-                                onClick={() => setCurrentGroup(group)}
-                                className={`item ${currentGroup && group._id === currentGroup._id ? 'selected' : ''}`}>
+                                key={group.id}
+                                onClick={() => {
+                                    setCurrentGroup(group);
+                                }}
+                                className={`item ${currentGroup && group.id === currentGroup.id ? 'selected' : ''}`}>
                                 {group.name}
                             </li>
                         ))}

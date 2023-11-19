@@ -1,17 +1,12 @@
-import UserType from "@/types/server/UserType";
-import { ObjectId } from "mongodb";
+import UserType from "@/types/UserType";
 import { z } from "zod";
 
 const userSchema = z.object({
-    name: z.string().min(5, "Username must have between 5 and 15 characters at least").max(15, "Username must have between 5 and 15 characters at least"),
+    id: z.string().uuid().optional(),
+    name: z.string().min(5, "Username must have between 5 and 15 characters").max(15, "Username must have between 5 and 15 characters"),
     email: z.string().email(),
     password: z.string().min(6, "Password must have 6 characters at least"),
-    image: z.string(),
-    groups: z.array(
-        z.object({
-            _id: z.instanceof(ObjectId)
-        })
-    ),
+    image: z.string().optional(),
     createdAt: z.date()
 });
 

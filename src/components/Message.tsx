@@ -1,5 +1,5 @@
 import ContextMenuProps from '@/types/ContextMenuProps';
-import Message from '@/types/client/MessageType';
+import Message from '@/types/MessageType';
 import { useState } from 'react';
 
 type MessageProps = {

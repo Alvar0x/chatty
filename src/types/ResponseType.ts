@@ -1,6 +1,12 @@
+import { RowDataPacket } from "mysql2";
+import GroupType from "./GroupType";
+import MessageType from "./MessageType";
+import UserType from "./UserType";
+
 type ResponseType = {
-    code: number,
-    message: string
+    status: number,
+    message: string,
+    data?: any | any[]
 }
 
 export default ResponseType;

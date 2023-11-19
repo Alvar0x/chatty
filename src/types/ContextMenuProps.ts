@@ -1,4 +1,4 @@
-import MessageType from "./client/MessageType";
+import MessageType from "./MessageType";
 
 type ContextMenuProps = {
     open: boolean;

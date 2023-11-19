@@ -1,11 +1,11 @@
-import MessageType from "@/types/server/MessageType";
-import { ObjectId } from "mongodb";
+import MessageType from "@/types/MessageType";
 import { z } from "zod";
 
 const messageSchema = z.object({
+    id: z.string().uuid().optional(),
     content: z.string().min(1, "The message can't be empty"),
-    groupId: z.instanceof(ObjectId),
-    userId: z.instanceof(ObjectId),
+    groupId: z.string().uuid(),
+    userId: z.string().uuid(),
     createdAt: z.date()
 });
 

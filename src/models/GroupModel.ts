@@ -1,42 +1,82 @@
-import GroupType from "@/types/server/GroupType";
-import { ObjectId, Collection } from 'mongodb';
+import pool from "@/database/connection";
+import GroupType from "@/types/GroupType";
+import { RowDataPacket, ResultSetHeader } from 'mysql2';
+import { v4 } from "uuid";
 
 class GroupModel {
-    static async create(groupCollection: Collection<GroupType>, group: GroupType) {
-        const result = await groupCollection.insertOne(group);
-        return result;
+    static async create({ name, createdAt }: GroupType) {
+        const newId = v4();
+
+        const [result] = await pool.execute<ResultSetHeader>(
+            'insert into `groups` (id, name, createdAt) values (uuid_to_bin(?), ?, ?)',
+            [newId, name, createdAt]
+        );
+
+        if (!result.affectedRows) {
+            throw new Error('Couldn\'t create the group');
+        }
+
+        return newId;
     }
 
-    static async getAll(groupCollection: Collection<GroupType>) {
-        const result = await groupCollection.find().toArray();
-        return result;
+    static async addUserToGroup(userId: string, groupId: string, role: 'user' | 'admin') {
+        const [result] = await pool.execute<ResultSetHeader>(
+            'insert into usersgroups (userId, groupId, role) values (uuid_to_bin(?), uuid_to_bin(?), ?)',
+            [userId, groupId, role]
+        );
+
+        if (!result.affectedRows) {
+            throw new Error('Couldn\'t add the user to the group');
+        }
+
+        return { userId, groupId };
     }
 
-    static async getById(groupCollection: Collection<GroupType>, groupId: string) {
-        const result = await groupCollection.findOne({ _id: new ObjectId(groupId) });
-        return result;
+    static async getByUser(userId: string) {
+        const [rows] = await pool.execute<RowDataPacket[][]>(
+            'select bin_to_uuid(id) id, name, createdAt from `groups` where id in (select groupId from usersgroups where userId = uuid_to_bin(?))',
+            [userId]
+        );
+        return rows;
     }
 
-    static async getByName(groupCollection: Collection<GroupType>, name: string) {
-        const result = await groupCollection.findOne({ name });
-        return result;
+    static async getById(groupId: string) {
+        const [rows] = await pool.execute<RowDataPacket[][]>(
+            'select bin_to_uuid(id) id, name, createdAt from `groups` where id = uuid_to_bin(?)',
+            [groupId]
+        );
+
+        if (rows.length === 0) {
+            throw new Error('Group not found');
+        }
+
+        return rows[0];
     }
 
-    static async getByUser(groupCollection: Collection<GroupType>, userId: string) {
-        const result = groupCollection.find({ users: { $elemMatch: { $eq: new ObjectId(userId) } } }).sort({ createdAt: 1 }).toArray();
-        return result;
+    static async update(groupId: string, newGroupName: string) {
+        const [result] = await pool.execute<ResultSetHeader>(
+            'update table `groups` set name = ? where id = uuid_to_bin(?)',
+            [newGroupName, groupId]
+        );
+
+        if (!result.affectedRows) {
+            throw new Error('Couldn\'t update the group');
+        }
+
+        return groupId;
     }
 
-    static async update(groupCollection: Collection<GroupType>, groupId: string, newGroupName: string) {
-        const result = await groupCollection.updateOne({ _id: new ObjectId(groupId) }, {
-            $set: { name: newGroupName }
-        });
-        return result;
-    }
+    static async delete(groupId: string) {
+        const [result] = await pool.execute<ResultSetHeader>(
+            'delete from `groups` where id = uuid_to_bin(?)',
+            [groupId]
+        );
 
-    static async delete(groupCollection: Collection<GroupType>, groupId: string) {
-        const result = await groupCollection.deleteOne({ _id: new ObjectId(groupId) });
-        return result;
+        if (!result.affectedRows) {
+            throw new Error('Group not found');
+        }
+
+        return { deleted: true };
     }
 }
 

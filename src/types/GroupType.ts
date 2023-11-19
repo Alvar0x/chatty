@@ -1,7 +1,6 @@
 type GroupType = {
-    _id: string,
+    id: string,
     name: string,
-    users: string[],
     createdAt: Date
 }
 
