@@ -13,4 +13,4 @@ Chatty is a web application where you can chat with friends adding them to your 
 ## Owner
 
 I'm the developer and owner of this application, made with much love and enthusiasm from the first day to the last.
-This is my first complete own project, developed with Next.JS 13.5.6. If you like it, you can check out my [LinkedIn](www.linkedin.com/in/alvaro-navas-soto-69579822b).
+This is my first complete own project, developed with Next.JS 13.5.6. If you like it, you can check out my [LinkedIn](https://www.linkedin.com/in/alvaro-navas-soto-69579822b).
